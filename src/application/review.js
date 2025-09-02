@@ -18,6 +18,7 @@ const createReview = async (req, res) => {
     const review = await Review.create({
       rating: reviewData.rating,
       comment: reviewData.comment,
+      userId: reviewData.userId,
     });
 
     hotel.reviews.push(review._id);
