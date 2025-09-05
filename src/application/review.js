@@ -1,46 +1,44 @@
 import Review from "../infrastructure/entities/Review.js";
 import Hotel from "../infrastructure/entities/Hotel.js";
+import ValidationError from "../domain/errors/validation-error.js";
+import NotFoundError from "../domain/errors/not-found-error.js";
 
-const createReview = async (req, res) => {
+const createReview = async (req, res, next) => {
   try {
     const reviewData = req.body;
     if (!reviewData.rating || !reviewData.comment || !reviewData.hotelId) {
-      res.status(400).send();
-      return;
+      throw new ValidationError("Rating, comment, and hotelId are required");
     }
 
     const hotel = await Hotel.findById(reviewData.hotelId);
     if (!hotel) {
-      res.status(404).send();
-      return;
+      throw new NotFoundError("Hotel not found");
     }
 
     const review = await Review.create({
       rating: reviewData.rating,
       comment: reviewData.comment,
-      userId: reviewData.userId,
     });
 
     hotel.reviews.push(review._id);
     await hotel.save();
     res.status(201).send();
   } catch (error) {
-    res.status(500).send();
+    next(error);
   }
 };
 
-const getReviewsForHotel = async (req, res) => {
+const getReviewsForHotel = async (req, res, next) => {
   try {
     const hotelId = req.params.hotelId;
     const hotel = await Hotel.findById(hotelId).populate("reviews");
     if (!hotel) {
-      res.status(404).send();
-      return;
+      throw new NotFoundError("Hotel not found");
     }
 
     res.status(200).json(hotel.reviews);
   } catch (error) {
-    res.status(500).send();
+    next(error);
   }
 };
 
