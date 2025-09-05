@@ -3,6 +3,7 @@ import Review from "../infrastructure/entities/Review";
 import Hotel from "../infrastructure/entities/Hotel";
 import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
+import { getAuth } from "@clerk/express";
 
 const createReview = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -16,9 +17,12 @@ const createReview = async (req: Request, res: Response, next: NextFunction) => 
       throw new NotFoundError("Hotel not found");
     }
 
+    const { userId } = getAuth(req);
+
     const review = await Review.create({
       rating: reviewData.rating,
       comment: reviewData.comment,
+      userId: userId,
     });
 
     hotel.reviews.push(review._id);
