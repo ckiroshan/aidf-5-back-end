@@ -1,9 +1,10 @@
-import Review from "../infrastructure/entities/Review.js";
-import Hotel from "../infrastructure/entities/Hotel.js";
-import ValidationError from "../domain/errors/validation-error.js";
-import NotFoundError from "../domain/errors/not-found-error.js";
+import { Request, Response, NextFunction } from "express";
+import Review from "../infrastructure/entities/Review";
+import Hotel from "../infrastructure/entities/Hotel";
+import NotFoundError from "../domain/errors/not-found-error";
+import ValidationError from "../domain/errors/validation-error";
 
-const createReview = async (req, res, next) => {
+const createReview = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const reviewData = req.body;
     if (!reviewData.rating || !reviewData.comment || !reviewData.hotelId) {
@@ -28,7 +29,7 @@ const createReview = async (req, res, next) => {
   }
 };
 
-const getReviewsForHotel = async (req, res, next) => {
+const getReviewsForHotel = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const hotelId = req.params.hotelId;
     const hotel = await Hotel.findById(hotelId).populate("reviews");
