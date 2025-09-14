@@ -3,13 +3,39 @@ import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
 
 import { Request, Response, NextFunction } from "express";
-import { CreateHotelDTO } from "../domain/dtos/hotel";
+import { CreateHotelDTO, SearchHotelDTO } from "../domain/dtos/hotel";
+import { generateEmbedding } from "./utils/embeddings";
 
 export const getAllHotels = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const hotels = await Hotel.find();
     res.status(200).json(hotels);
     return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllHotelsBySearchQuery = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = SearchHotelDTO.safeParse(req.query);
+    if (!result.success) {
+      throw new ValidationError(`${result.error.message}`);
+    }
+    const { query } = result.data;
+
+    const queryEmbedding = await generateEmbedding(query);
+
+    const hotels = await Hotel.aggregate([
+      {
+        $vectorSearch: { index: "hotel_vector_index", path: "embedding", queryVector: queryEmbedding, numCandidates: 25, limit: 4 },
+      },
+      {
+        $project: { _id: 1, name: 1, location: 1, price: 1, image: 1, rating: 1, reviews: 1, score: { $meta: "vectorSearchScore" } },
+      },
+    ]);
+
+    res.status(200).json(hotels);
   } catch (error) {
     next(error);
   }
@@ -24,7 +50,11 @@ export const createHotel = async (req: Request, res: Response, next: NextFunctio
       throw new ValidationError(`${result.error.message}`);
     }
 
-    await Hotel.create(result.data);
+    const embedding = await generateEmbedding(
+      `${result.data.name} ${result.data.description} ${result.data.location} ${result.data.price}`
+    );
+
+    await Hotel.create({ ...result.data, embedding });
     res.status(201).send();
   } catch (error) {
     next(error);

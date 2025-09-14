@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { getAllHotels, createHotel, getHotelById, updateHotel, patchHotel, deleteHotel } from "../application/hotel";
+import { getAllHotels, createHotel, getHotelById, updateHotel, patchHotel, deleteHotel, getAllHotelsBySearchQuery } from "../application/hotel";
 import isAuthenticated from "./middleware/authentication-middleware";
 import isAdmin from "./middleware/authorization-middleware";
 import { respondToAIQuery } from "../application/ai";
@@ -18,6 +18,8 @@ hotelsRouter
   .post(isAuthenticated, isAdmin, createHotel);
 
 hotelsRouter.route("/ai").post(respondToAIQuery);
+
+hotelsRouter.route("/search").get(getAllHotelsBySearchQuery);
 
 hotelsRouter
   .route("/:_id")
