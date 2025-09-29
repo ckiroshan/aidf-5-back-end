@@ -5,6 +5,7 @@ import ValidationError from "../domain/errors/validation-error";
 import { Request, Response, NextFunction } from "express";
 import { CreateHotelDTO, SearchHotelDTO } from "../domain/dtos/hotel";
 import { generateEmbedding } from "./utils/embeddings";
+import stripe from "../infrastructure/stripe";
 
 export const getAllHotels = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -54,7 +55,19 @@ export const createHotel = async (req: Request, res: Response, next: NextFunctio
       `${result.data.name} ${result.data.description} ${result.data.location} ${result.data.price}`
     );
 
-    await Hotel.create({ ...result.data, embedding });
+    // Create Stripe product with default price for the nightly rate
+    const product = await stripe.products.create({
+      name: result.data.name,
+      description: result.data.description,
+      default_price_data: {
+        unit_amount: Math.round(result.data.price * 100),
+        currency: "usd",
+      },
+    });
+
+    const defaultPriceId = typeof product.default_price === "string" ? product.default_price : (product.default_price as any)?.id;
+
+    await Hotel.create({...result.data, embedding, stripePriceId: defaultPriceId });
     res.status(201).send();
   } catch (error) {
     next(error);
@@ -121,6 +134,34 @@ export const deleteHotel = async (req: Request, res: Response, next: NextFunctio
     }
     await Hotel.findByIdAndDelete(_id);
     res.status(200).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createHotelStripePrice = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const _id = req.params._id;
+    const hotel = await Hotel.findById(_id);
+    if (!hotel) {
+      throw new NotFoundError("Hotel not found");
+    }
+
+    // Create a product with default price for the hotel's nightly rate
+    const product = await stripe.products.create({
+      name: hotel.name,
+      description: hotel.description,
+      default_price_data: {
+        unit_amount: Math.round(hotel.price * 100),
+        currency: "usd",
+      },
+    });
+
+    const defaultPriceId = typeof product.default_price === "string" ? product.default_price : (product.default_price as any)?.id;
+
+    const updated = await Hotel.findByIdAndUpdate(_id, { stripePriceId: defaultPriceId }, { new: true });
+
+    res.status(200).json(updated);
   } catch (error) {
     next(error);
   }
