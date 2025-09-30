@@ -15,8 +15,7 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
       throw new ValidationError(booking.error.message);
     }
 
-    const auth = getAuth(req);
-    const userId = (auth as any)?.userId as string | undefined;
+    const { userId } = getAuth(req);
     if (!userId) {
       throw new UnauthorizedError("Unauthorized");
     }
