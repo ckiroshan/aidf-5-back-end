@@ -92,3 +92,23 @@ export const getBookingById = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+export const getBookingsForUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = req.params;
+
+    // Only logged-in user can access their own bookings
+    const auth = getAuth(req);
+    if (!auth?.userId || auth.userId !== userId) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    const bookings = await Booking.find({ userId })
+      .populate("hotelId", "name image location price") // populate hotel details
+      .sort({ createdAt: -1 }); // most recent first
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    next(error);
+  }
+};
