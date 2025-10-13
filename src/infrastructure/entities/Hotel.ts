@@ -12,6 +12,12 @@ const hotelSchema = new mongoose.Schema({
   embedding: { type: [Number], default: [] },
 });
 
+// Index for better query performance
+hotelSchema.index({ location: 1 });
+hotelSchema.index({ price: 1 });
+hotelSchema.index({ rating: -1 });
+hotelSchema.index({ name: 1 });
+
 const Hotel = mongoose.model("Hotel", hotelSchema);
 
 export default Hotel;

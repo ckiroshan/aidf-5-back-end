@@ -2,12 +2,24 @@ import Location from "../infrastructure/entities/Location";
 import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
 import { Request, Response, NextFunction } from "express";
+import Hotel from "../infrastructure/entities/Hotel";
 
+// Get all locations (only country)
 export const getAllLocations = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const locations = await Location.find();
     res.status(200).json(locations);
     return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all locations (city + country) from hotels
+export const getAllLocationNames = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const names = await Hotel.distinct("location"); // from Hotel to ensure availability
+    res.status(200).json(names);
   } catch (error) {
     next(error);
   }

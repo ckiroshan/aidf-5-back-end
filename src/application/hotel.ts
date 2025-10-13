@@ -166,3 +166,52 @@ export const createHotelStripePrice = async (req: Request, res: Response, next: 
     next(error);
   }
 };
+
+export const getHotelsFiltered = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Extracting query parameters
+    const { locations, minPrice, maxPrice, sortBy, page = "1", pageSize = "12" } = req.query as Record<string, string>;
+
+    const filters: any = {};
+
+    // Location multi-select
+    if (locations) {
+      const arr = locations.split("|").map((s) => s.trim());
+      filters.location = { $in: arr };
+    }
+
+    // Price range (min - max)
+    if (minPrice || maxPrice) {
+      filters.price = {};
+      if (minPrice) filters.price.$gte = Number(minPrice);
+      if (maxPrice) filters.price.$lte = Number(maxPrice);
+    }
+
+    // Sorting map
+    const sortOptions: Record<string, Record<string, 1 | -1>> = {
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+      rating_desc: { rating: -1 },
+      alpha_asc: { name: 1 },
+      featured: { rating: -1 }, // fallback logic for featured
+    };
+    const sort = sortOptions[sortBy] || { name: 1 };
+
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const sizeNum = Math.min(Math.max(Number(pageSize) || 12, 1), 48);
+
+    // Querying the DB
+    const [items, total] = await Promise.all([
+      Hotel.find(filters)
+        .sort(sort)
+        .skip((pageNum - 1) * sizeNum)
+        .limit(sizeNum)
+        .select("_id name location image price rating reviews"),
+      Hotel.countDocuments(filters),
+    ]);
+
+    res.status(200).json({ items, total, page: pageNum, pageSize: sizeNum, totalPages: Math.ceil(total / sizeNum) });
+  } catch (error) {
+    next(error);
+  }
+};
