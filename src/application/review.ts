@@ -3,7 +3,8 @@ import Review from "../infrastructure/entities/Review";
 import Hotel from "../infrastructure/entities/Hotel";
 import NotFoundError from "../domain/errors/not-found-error";
 import ValidationError from "../domain/errors/validation-error";
-import { getAuth } from "@clerk/express";
+import { clerkClient, getAuth } from "@clerk/express";
+import UnauthorizedError from "../domain/errors/unauthorized-error";
 
 const createReview = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -18,11 +19,18 @@ const createReview = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const { userId } = getAuth(req);
+    if (!userId) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    // Fetch Clerk user info
+    const clerkUser = await clerkClient.users.getUser(userId);
 
     const review = await Review.create({
       rating: reviewData.rating,
       comment: reviewData.comment,
-      userId: userId,
+      userId,
+      fullName: clerkUser.fullName
     });
 
     hotel.reviews.push(review._id);

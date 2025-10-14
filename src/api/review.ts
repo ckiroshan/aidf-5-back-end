@@ -4,7 +4,7 @@ import isAuthenticated from "./middleware/authentication-middleware";
 
 const reviewRouter = express.Router();
 
-reviewRouter.post("/", isAuthenticated, createReview);
-reviewRouter.get("/hotel/:hotelId", isAuthenticated, getReviewsForHotel);
+reviewRouter.post("/", isAuthenticated, createReview);  // Create Review
+reviewRouter.get("/hotel/:hotelId", isAuthenticated, getReviewsForHotel);  // Get All Reviews
 
 export default reviewRouter;
