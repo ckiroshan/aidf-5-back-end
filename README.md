@@ -17,7 +17,7 @@
 
 This backend service is consumed by a separate React frontend application.
 
-**Frontend Repository** → 🔗 [ckiroshan/AI-Smart-Hotel-Platform-Frontend](https://github.com/ckiroshan/AI-Financial-Tracker)
+**Frontend Repository** → 🔗 [ckiroshan/AI-Smart-Hotel-Platform-Frontend](https://github.com/ckiroshan/aidf-5-front-end)
 
 ## 🏗️ API Data Flow
 This server plays a central role in complex functionalities like AI search and secure bookings. The architecture is modular, promoting scalability and maintainability.
