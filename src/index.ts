@@ -19,7 +19,7 @@ app.post("/api/stripe/webhook", bodyParser.raw({ type: "application/json" }), ha
 
 // Convert HTTP payloads into JS objects (after webhook)
 app.use(express.json());
-app.use(cors({ origin: [process.env.FRONTEND_URL!, "http://localhost:5173"], }));
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 
 app.use(clerkMiddleware());
 
